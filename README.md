@@ -145,12 +145,33 @@ podgen -s .\docs -d 10 --backend anthropic --model claude-sonnet-4-5
 podgen -s .\docs -d 5 --voice-a bf_emma --voice-b bm_george
 ```
 
-**Iterate on voices without re-running the LLM:**
+**Synthesize audio from an existing transcript (skip the LLM entirely):**
+
+If you already have a `transcript.md` (either from a previous `podgen` run or hand-written),
+point `--from-transcript` at the file and it will skip document ingest and LLM generation,
+going straight to TTS:
+
+```cmd
+podgen --from-transcript .\output\transcript.md -o .\output
+```
+
+The transcript file must use the two-speaker format — every line prefixed with `SPEAKER_A:` or `SPEAKER_B:`.
+`podgen` saves this format automatically; if you're writing one by hand:
+
+```
+SPEAKER_A: Welcome to the show. Today we're talking about...
+SPEAKER_B: Right, and what makes this interesting is...
+SPEAKER_A: Exactly. Let's start with the basics.
+```
+
+You can combine it with any voice flags:
 
 ```cmd
 podgen --from-transcript .\output\transcript.md -o .\output ^
-  --voice-a af_bella --voice-b bm_lewis
+  --voice-a af_bella --voice-b bm_lewis --format wav
 ```
+
+This is also the fastest way to **iterate on voices** — audio-only runs take ~45 s vs. minutes for a full regeneration.
 
 **Transcript-only (review before synthesizing):**
 

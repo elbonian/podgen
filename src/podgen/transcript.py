@@ -54,9 +54,10 @@ def generate_transcript(
     speaker_a: str = "Alex",
     speaker_b: str = "Jordan",
     max_tokens: int = 16000,
+    on_chunk=None,
 ) -> str:
     user_prompt = _build_user_prompt(source_text, guidance, duration_min, speaker_a, speaker_b)
-    return client.complete(system=SYSTEM_PROMPT, user=user_prompt, max_tokens=max_tokens)
+    return client.complete(system=SYSTEM_PROMPT, user=user_prompt, max_tokens=max_tokens, on_chunk=on_chunk)
 
 
 _TURN_RE = re.compile(r"^SPEAKER_([AB])\s*:\s*(.*)$", re.IGNORECASE)

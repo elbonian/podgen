@@ -38,6 +38,8 @@ def generate(
     audio_format: str = typer.Option("mp3", "--format", help="mp3 or wav."),
     transcript_only: bool = typer.Option(False, "--transcript-only", help="Skip TTS; just write transcript."),
     from_transcript: Path = typer.Option(None, "--from-transcript", help="Skip LLM; synthesize audio from an existing transcript.md/.json."),
+    timeout: int = typer.Option(1800, "--timeout", help="LLM request timeout in seconds (default 30 min)."),
+    quiet: bool = typer.Option(False, "--quiet", help="Suppress live transcript streaming output."),
 ) -> None:
     """Generate a podcast from a folder of documents."""
     load_dotenv()
@@ -61,16 +63,28 @@ def generate(
         combined = combine_docs(docs)
 
         # 2. Transcript
-        llm = build_client(backend=backend, model=model, base_url=base_url)
-        with console.status(f"[bold cyan]Generating transcript via {backend}:{model}..."):
-            raw = generate_transcript(
-                client=llm,
-                source_text=combined,
-                guidance=guidance,
-                duration_min=duration,
-                speaker_a=speaker_a,
-                speaker_b=speaker_b,
-            )
+        llm = build_client(backend=backend, model=model, base_url=base_url, timeout=timeout)
+        console.print(f"[bold cyan]Generating transcript via {backend}:{model}[/bold cyan] [dim](streaming)[/dim]")
+
+        import sys as _sys
+
+        def _on_chunk(piece: str) -> None:
+            _sys.stdout.write(piece)
+            _sys.stdout.flush()
+
+        on_chunk = None if quiet else _on_chunk
+        raw = generate_transcript(
+            client=llm,
+            source_text=combined,
+            guidance=guidance,
+            duration_min=duration,
+            speaker_a=speaker_a,
+            speaker_b=speaker_b,
+            on_chunk=on_chunk,
+        )
+        if not quiet:
+            _sys.stdout.write("\n")
+            _sys.stdout.flush()
         transcript_path = output_dir / "transcript.md"
         transcript_path.write_text(raw, encoding="utf-8")
         console.print(f"[green]Transcript written:[/green] {transcript_path}")

@@ -10,4 +10,4 @@ User guidance / focus:
 Source material:
 {source_text}
 
-Now write the full transcript. Remember: every line must start with "SPEAKER_A:" or "SPEAKER_B:".
+Now write the full transcript. Make it sound like two sharp friends genuinely working something out together - vary turn lengths wildly (mix one-word reactions with longer explanations), use natural speech (contractions, "yeah", "wait", "right", "honestly"), open with a hook not a formal intro, and end with a satisfying moment rather than a sign-off. Every line must start with "SPEAKER_A:" or "SPEAKER_B:" (with the underscore).

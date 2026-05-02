@@ -51,7 +51,29 @@ def generate_transcript(
     return client.complete(system=SYSTEM_PROMPT, user=user_prompt, max_tokens=max_tokens, on_chunk=on_chunk)
 
 
-_TURN_RE = re.compile(r"^SPEAKER_([AB])\s*:\s*(.*)$", re.IGNORECASE)
+# Accept SPEAKER_A, SPEAKER A, Speaker A, SPEAKER-A, etc. — models frequently drop the underscore.
+_TURN_RE = re.compile(r"^\**\s*SPEAKER[\s_\-]*([AB])\**\s*:\s*(.*)$", re.IGNORECASE)
+
+
+# Markdown constructs we want to strip before sending text to TTS so it isn't
+# pronounced literally (e.g. "*Genji*" becoming "asterisk Genji asterisk").
+_MD_BOLD_ITALIC = re.compile(r"(\*{1,3})(.+?)\1")
+_MD_UNDERSCORE_EMPH = re.compile(r"(?<!\w)_{1,3}([^_]+?)_{1,3}(?!\w)")
+_MD_INLINE_CODE = re.compile(r"`([^`]+)`")
+_MD_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
+_MD_IMAGE = re.compile(r"!\[([^\]]*)\]\([^)]*\)")
+_MD_HEADING = re.compile(r"^#{1,6}\s+", re.MULTILINE)
+
+
+def _strip_markdown(text: str) -> str:
+    """Remove markdown formatting characters so TTS doesn't read them literally."""
+    text = _MD_IMAGE.sub(r"\1", text)
+    text = _MD_LINK.sub(r"\1", text)
+    text = _MD_BOLD_ITALIC.sub(r"\2", text)
+    text = _MD_UNDERSCORE_EMPH.sub(r"\1", text)
+    text = _MD_INLINE_CODE.sub(r"\1", text)
+    text = _MD_HEADING.sub("", text)
+    return text
 
 
 def parse_transcript(raw: str) -> list[Turn]:
@@ -66,12 +88,12 @@ def parse_transcript(raw: str) -> list[Turn]:
         m = _TURN_RE.match(line)
         if m:
             if current and current.text.strip():
-                current.text = current.text.strip()
+                current.text = _strip_markdown(current.text).strip()
                 turns.append(current)
             current = Turn(speaker=m.group(1).upper(), text=m.group(2).strip())
         elif current:
             current.text += " " + line
     if current and current.text.strip():
-        current.text = current.text.strip()
+        current.text = _strip_markdown(current.text).strip()
         turns.append(current)
     return turns

@@ -1,0 +1,20 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+output/
+.cache/
+
+# local test assets (uncomment to commit)
+test/
+
+# IDE / OS
+.idea/
+.vscode/
+.windsurf/
+.DS_Store
+Thumbs.db

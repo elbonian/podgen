@@ -156,7 +156,7 @@ podgen --from-transcript .\output\transcript.md -o .\output
 ```
 
 The transcript file must use the two-speaker format — every line prefixed with `SPEAKER_A:` or `SPEAKER_B:`.
-`podgen` saves this format automatically; if you're writing one by hand:
+`podgen` saves this format automatically. You can also generate transcripts manually in **Claude.ai / ChatGPT / any chat UI** using the bundled prompt files — see `@docs/MANUAL_TRANSCRIPT.md` for the step-by-step workflow. If you're writing one by hand:
 
 ```
 SPEAKER_A: Welcome to the show. Today we're talking about...
@@ -194,6 +194,7 @@ Detailed docs live in `docs/`:
 - **`docs/VOICES.md`** — full Kokoro voice catalog with guidance
 - **`docs/TROUBLESHOOTING.md`** — common errors and fixes
 - **`docs/PROMPTING.md`** — how to write effective `--guidance`
+- **`docs/MANUAL_TRANSCRIPT.md`** — generate a transcript yourself in Claude/ChatGPT and feed it to `podgen` for TTS only
 
 ## How It Works
 

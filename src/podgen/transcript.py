@@ -1,25 +1,21 @@
-"""Transcript generation via Anthropic Claude."""
+"""Transcript generation via a pluggable LLM backend.
+
+The prompts live in ``src/podgen/prompts/*.md`` so users can also copy them
+into Claude/ChatGPT for manual transcript generation (then feed the result
+back through ``--from-transcript`` for TTS).
+"""
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
 
+from . import prompts
 from .llm import LLMClient
 
 WORDS_PER_MINUTE = 150
 
-SYSTEM_PROMPT = """You are a podcast scriptwriter. You write natural, engaging two-speaker \
-podcast dialogue based on source material the user provides.
-
-Rules:
-- Output ONLY the transcript, no preamble, no outline, no stage directions in brackets.
-- Every line must start with either "SPEAKER_A:" or "SPEAKER_B:" (exact prefix).
-- Alternate speakers naturally. Keep turns mostly 1-4 sentences; occasional longer turns are fine.
-- Write in a conversational tone: contractions, reactions ("yeah", "right", "huh"), short asides.
-- Do NOT include non-verbal cues like [laughs] or *sighs* - the TTS can't handle them.
-- Do NOT include sound effects, music cues, or chapter markers.
-- Cover the source material accurately; do not fabricate facts.
-- Aim for approximately the target word count the user specifies."""
+SYSTEM_PROMPT = prompts.load("transcript_system")
+_USER_PROMPT_TEMPLATE = prompts.load("transcript_user")
 
 
 @dataclass
@@ -30,20 +26,15 @@ class Turn:
 
 def _build_user_prompt(source_text: str, guidance: str, duration_min: int, speaker_a: str, speaker_b: str) -> str:
     target_words = duration_min * WORDS_PER_MINUTE
-    return f"""Generate a two-speaker podcast transcript from the source material below.
-
-SPEAKER_A is named "{speaker_a}". SPEAKER_B is named "{speaker_b}". They do NOT need to say their \
-names repeatedly; just converse naturally.
-
-Target length: approximately {target_words} words (~{duration_min} minutes of spoken audio at {WORDS_PER_MINUTE} wpm).
-
-User guidance / focus:
-{guidance or "(none - use your judgment)"}
-
-Source material:
-{source_text}
-
-Now write the full transcript. Remember: every line must start with "SPEAKER_A:" or "SPEAKER_B:"."""
+    return _USER_PROMPT_TEMPLATE.format(
+        speaker_a=speaker_a,
+        speaker_b=speaker_b,
+        target_words=target_words,
+        duration_min=duration_min,
+        words_per_minute=WORDS_PER_MINUTE,
+        guidance=guidance or "(none - use your judgment)",
+        source_text=source_text,
+    )
 
 
 def generate_transcript(
